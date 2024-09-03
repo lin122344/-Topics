@@ -12,6 +12,21 @@ counterLeftShirt = 0
 counterRightPants = 0
 counterLeftPants = 0
 
+# 設置窗口名稱
+windowName = 'My Window'
+
+# 創建窗口
+cv2.namedWindow(windowName, cv2.WINDOW_NORMAL)
+cv2.setWindowProperty(windowName, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+
+# 打開攝像頭（默認攝像頭的ID通常是0）
+cap = cv2.VideoCapture(0)
+
+# 確保攝像頭成功打開
+if not cap.isOpened():
+    print("Error: Could not open camera.")
+    exit()
+
 def load_images():
     shirtFolderPath = "C:/Users/Student/Desktop/Topics/photo"  # 衣服文件夹路径
     listShirts = os.listdir(shirtFolderPath)
@@ -174,7 +189,7 @@ def process_frame(img, detector, shirtFolderPath, listShirts, listPants, imageNu
                 imgShirt = cv2.resize(imgShirt, (widthOfShirt, longOFshirt))
                 imgShirt = rotate_image(imgShirt, angle)
                 try:
-                    img = cvzone.overlayPNG(img, imgShirt, (lm12[0] - 40, lm12[1] - 30))
+                    img = cvzone.overlayPNG(img, imgShirt, (lm12[0] - 50, lm12[1] - 30))
                 except Exception as e:
                     print(f"Error overlaying shirt image: {e}")
             else:
@@ -197,7 +212,7 @@ def process_frame(img, detector, shirtFolderPath, listShirts, listPants, imageNu
             imgPants = cv2.resize(imgPants, (widthOfPants, longOfPants))
             imgPants = rotate_image(imgPants, angle)
             try:
-                img = cvzone.overlayPNG(img, imgPants, (lm124[0] - 45, lm124[1]))
+                img = cvzone.overlayPNG(img, imgPants, (lm124[0] - 65, lm124[1]))
             except Exception as e:
                 print(f"Error overlaying pants image: {e}")
         else:
@@ -220,7 +235,8 @@ def main():
 
             img, imageNumberShirt, imageNumberPants = process_frame(img, detector, shirtFolderPath, listShirts, listPants, imageNumberShirt, imageNumberPants, imgButtonRightShirt, imgButtonLeftShirt, imgButtonRightPants, imgButtonLeftPants, selectionSpeed, selfie_segmentation, background)
             
-            cv2.imshow("Image", img)
+            # 显示最终合成的图像
+            cv2.imshow(windowName, img)
             key = cv2.waitKey(1)
             if key == ord('q'):
                 break
