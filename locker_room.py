@@ -6,7 +6,7 @@ import cvzone
 from cvzone.PoseModule import PoseDetector
 import math
 
-# 全局计数器
+# 翻頁紀錄器
 counterRightShirt = 0
 counterLeftShirt = 0
 counterRightPants = 0
@@ -28,10 +28,10 @@ if not cap.isOpened():
     exit()
 
 def load_images():
-    shirtFolderPath = "C:/Users/Student/Desktop/Topics/photo"  # 衣服文件夹路径
+    shirtFolderPath = "C:/Users/Student/Desktop/Topics/clothes_folder"  # 衣服文件夹路径
     listShirts = os.listdir(shirtFolderPath)
 
-    librarysubfolderpath = "C:/Users/Student/Desktop/Topics/photo2"  # 褲子文件夹路径
+    librarysubfolderpath = "C:/Users/Student/Desktop/Topics/pants_folder"  # 褲子文件夹路径
     listPants = os.listdir(librarysubfolderpath)
 
     # 加载四个按钮
@@ -43,23 +43,27 @@ def load_images():
     imgButtonRightPants = cv2.imread(button_right_pants_path, cv2.IMREAD_UNCHANGED)
     imgButtonLeftPants = cv2.flip(imgButtonRightPants, 1)
 
+    # 确定按鈕成功輸出成功
     if imgButtonRightShirt is None or imgButtonLeftShirt is None or imgButtonRightPants is None or imgButtonLeftPants is None:
         raise FileNotFoundError("Error: Could not load button image.")
     
+    # 按鈕大小調整
     target_size = (120, 100)
     imgButtonRightShirt = resize_image(imgButtonRightShirt, target_size)
     imgButtonLeftShirt = resize_image(imgButtonLeftShirt, target_size)
     imgButtonRightPants = resize_image(imgButtonRightPants, target_size)
     imgButtonLeftPants = resize_image(imgButtonLeftPants, target_size)
-
+    # 讀取背景
     background_path = "C:/Users/Student/Desktop/Topics/bg1.jpg"
     background = cv2.imread(background_path)
     if background is None:
         raise FileNotFoundError("Error: Could not load background image.")
+    # 調整背景大小
     background = cv2.resize(background, (640, 480))
     
     return shirtFolderPath, listShirts, listPants, imgButtonRightShirt, imgButtonLeftShirt, imgButtonRightPants, imgButtonLeftPants, background
 
+# 調整圖像大小function
 def resize_image(image, target_size):
     if image.shape[2] == 3:
         alpha_channel = np.ones((image.shape[0], image.shape[1]), dtype=np.uint8) * 255
@@ -67,10 +71,11 @@ def resize_image(image, target_size):
     return cv2.resize(image, target_size, interpolation=cv2.INTER_AREA)
 
 def calculate_angle(point1, point2):
+    # 計算衣服角度
     dx = point2[0] - point1[0]
     dy = point2[1] - point1[1]
     angle = math.degrees(math.atan2(dy, dx))
-    
+    # 確保角度在 -90 到 90 度之間
     if angle < -90:
         angle += 180
     elif angle > 90:
@@ -79,24 +84,32 @@ def calculate_angle(point1, point2):
     return angle
 
 def rotate_image(image, angle):
+    # 計算圖像中心點
     (h, w) = image.shape[:2]
     center = (w // 2, h // 2)
     
+    # 旋轉矩陣
     M = cv2.getRotationMatrix2D(center, -angle, 1.0)
+    # 圖像旋轉
     rotated = cv2.warpAffine(image, M, (w, h), flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_CONSTANT, borderValue=(0,0,0,0))
     
     return rotated
 
 def initialize():
+    # 設定 MediaPipe 人體定位
     mp_selfie_segmentation = mp.solutions.selfie_segmentation
     selfie_segmentation = mp_selfie_segmentation.SelfieSegmentation(model_selection=1)
     detector = PoseDetector()
+    # 打開設像頭
     cap = cv2.VideoCapture(0)
+    # 加載圖像
     shirtFolderPath, listShirts, listPants, imgButtonRightShirt, imgButtonLeftShirt, imgButtonRightPants, imgButtonLeftPants, background = load_images()
+    # 設置翻頁速度
     selectionSpeed = 20
     return cap, detector, shirtFolderPath, listShirts, listPants, imgButtonRightShirt, imgButtonLeftShirt, imgButtonRightPants, imgButtonLeftPants, selectionSpeed, selfie_segmentation, background
 
 def read_frame(cap):
+
     success, img = cap.read()
     if not success:
         print("Failed to read frame. Retrying...")
@@ -107,6 +120,7 @@ def handle_paging(img, lmList, listShirts, listPants, imageNumberShirt, imageNum
     max_index_shirts = len(listShirts) - 1
     max_index_pants = len(listPants) - 1
 
+    # 檢翻頁操作
     if (lmList[20] is not None) or (lmList[19] is not None):
         # 螢幕左上，右手上
         if lmList[20] and lmList[20][0] < 150 and 100 < lmList[20][1] < 200:
@@ -151,6 +165,7 @@ def handle_paging(img, lmList, listShirts, listPants, imageNumberShirt, imageNum
     return img, imageNumberShirt, imageNumberPants
 
 def process_frame(img, detector, shirtFolderPath, listShirts, listPants, imageNumberShirt, imageNumberPants, imgButtonRightShirt, imgButtonLeftShirt, imgButtonRightPants, imgButtonLeftPants, selectionSpeed, selfie_segmentation, background):
+    # 背景分割
     img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     results = selfie_segmentation.process(img_rgb)
     condition = np.stack((results.segmentation_mask,) * 3, axis=-1) > 0.1
@@ -163,7 +178,7 @@ def process_frame(img, detector, shirtFolderPath, listShirts, listPants, imageNu
     img = cvzone.overlayPNG(img, imgButtonLeftShirt, (10, 100))
     img = cvzone.overlayPNG(img, imgButtonRightPants, (510, 300))
     img = cvzone.overlayPNG(img, imgButtonLeftPants, (10, 300))
-
+    # 姿勢定位
     img = detector.findPose(img, draw=False)
     lmList, _ = detector.findPosition(img, bboxWithHands=False, draw=False)
     
@@ -171,7 +186,7 @@ def process_frame(img, detector, shirtFolderPath, listShirts, listPants, imageNu
         lm11, lm12 = lmList[11], lmList[12]
         angle = calculate_angle(lm11, lm12)
         
-        # 處理衣服
+        # 處理衣服翻頁與定位點
         imgShirt = cv2.imread(os.path.join(shirtFolderPath, listShirts[imageNumberShirt]), cv2.IMREAD_UNCHANGED)
         if imgShirt is not None:
             if (lm11[0] - lm12[0]) > 200:
@@ -197,11 +212,11 @@ def process_frame(img, detector, shirtFolderPath, listShirts, listPants, imageNu
         else:
             print(f"Error: Could not load shirt image from {os.path.join(shirtFolderPath, listShirts[imageNumberShirt])}.")
 
-    # 處理褲子
+    # 處理褲子翻頁與定位點
     if lmList:
         lm124, lm123 = lmList[24], lmList[23]
 
-        pants_folder_path = "C:/Users/Student/Desktop/Topics/photo2"  # 褲子文件夹路径
+        pants_folder_path = "C:/Users/Student/Desktop/Topics/pants_folder"  # 褲子文件夹路径
         pants_image_name = listPants[imageNumberPants]
         pants_path = os.path.join(pants_folder_path, pants_image_name)
 
@@ -217,25 +232,27 @@ def process_frame(img, detector, shirtFolderPath, listShirts, listPants, imageNu
                 print(f"Error overlaying pants image: {e}")
         else:
             cv2.putText(img, "Please be closer", (120, 200), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 0, 255), 2, cv2.LINE_AA)
-        
+
         img, imageNumberShirt, imageNumberPants = handle_paging(img, lmList, listShirts, listPants, imageNumberShirt, imageNumberPants, selectionSpeed)
     return img, imageNumberShirt, imageNumberPants
 
 def main():
     cap = None
     try:
+         # 初始化設置和資源
         cap, detector, shirtFolderPath, listShirts, listPants, imgButtonRightShirt, imgButtonLeftShirt, imgButtonRightPants, imgButtonLeftPants, selectionSpeed, selfie_segmentation, background = initialize()
         imageNumberShirt = 0
         imageNumberPants = 0
 
         while True:
+            # 讀取圖像
             img, success = read_frame(cap)
             if not success:
                 continue
 
             img, imageNumberShirt, imageNumberPants = process_frame(img, detector, shirtFolderPath, listShirts, listPants, imageNumberShirt, imageNumberPants, imgButtonRightShirt, imgButtonLeftShirt, imgButtonRightPants, imgButtonLeftPants, selectionSpeed, selfie_segmentation, background)
             
-            # 显示最终合成的图像
+            # 顯示圖像
             cv2.imshow(windowName, img)
             key = cv2.waitKey(1)
             if key == ord('q'):
