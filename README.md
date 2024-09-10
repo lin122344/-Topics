@@ -21,12 +21,12 @@
       button_right_pants_path = "C:/Users/Student/Desktop/Topics/b2.png"
     - 背景圖片
         background_path = "C:/Users/Student/Desktop/Topics/bg1.jpg"
-## 所需套件
-  -CV2
-  -Numpy
-  -mediapipe
-  -cvzone
-  -math
+## 使用套件
+  -CV2  
+  -Numpy  
+  -mediapipe  
+  -cvzone  
+  -math  
 ## 使用方式
     1.下載所有檔案儲存在資料夾內(包含clothes_folder、pants_folder、b2.png)
     2.執行locker_room.py程式檔
