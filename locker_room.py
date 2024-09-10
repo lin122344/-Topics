@@ -34,7 +34,7 @@ def load_images():
     librarysubfolderpath = "C:/Users/Student/Desktop/Topics/pants_folder"  # 褲子文件夹路径
     listPants = os.listdir(librarysubfolderpath)
 
-    # 加载四个按钮
+    # 加载四个按鈕
     button_right_shirt_path = "C:/Users/Student/Desktop/Topics/b2.png"
     button_right_pants_path = "C:/Users/Student/Desktop/Topics/b2.png"
     
@@ -132,7 +132,7 @@ def handle_paging(img, lmList, listShirts, listPants, imageNumberShirt, imageNum
         else:
             counterRightShirt = 0
         
-        # 衣服翻页向左
+        # 衣服翻頁向左
         if lmList[19] and lmList[19][0] > 480 and 100 < lmList[19][1] < 200:
             counterLeftShirt += 1
             cv2.ellipse(img, (560, 150), (60, 60), 0, 0, counterLeftShirt * selectionSpeed, (0, 255, 0), 20)
@@ -142,7 +142,7 @@ def handle_paging(img, lmList, listShirts, listPants, imageNumberShirt, imageNum
         else:
             counterLeftShirt = 0
         
-        # 褲子翻页向右
+        # 褲子翻頁向右
         if lmList[19] and lmList[19][0] > 480 and 250 < lmList[19][1] < 350:
             counterRightPants += 1
             cv2.ellipse(img, (560, 350), (60, 60), 0, 0, counterRightPants * selectionSpeed, (0, 255, 0), 20)
@@ -173,7 +173,7 @@ def process_frame(img, detector, shirtFolderPath, listShirts, listPants, imageNu
     background = cv2.resize(background, (img.shape[1], img.shape[0]))
     img = np.where(img_fg == 0, background, img_fg)
 
-    # 添加按钮图像
+    # 添加按鈕圖像
     img = cvzone.overlayPNG(img, imgButtonRightShirt, (510, 100))
     img = cvzone.overlayPNG(img, imgButtonLeftShirt, (10, 100))
     img = cvzone.overlayPNG(img, imgButtonRightPants, (510, 300))
